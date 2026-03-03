@@ -12,6 +12,17 @@ import os
 # Initialize database
 Base.metadata.create_all(bind=engine)
 
+# Auto-ingest if index is missing
+if not os.path.exists(settings.INDEX_DIR) or not os.listdir(settings.INDEX_DIR):
+    print("FAISS index not found. Starting auto-ingestion...")
+    from app.rag.ingest import Ingestor
+    try:
+        ingestor = Ingestor()
+        ingestor.run()
+        print("Auto-ingestion complete.")
+    except Exception as e:
+        print(f"Auto-ingestion failed: {e}")
+
 app = FastAPI(title="RAG Chatbot")
 
 # CORS Configuration
