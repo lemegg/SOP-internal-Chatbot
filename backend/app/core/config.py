@@ -14,6 +14,14 @@ class Settings(BaseSettings):
     INDEX_DIR: str = os.path.join(DATA_DIR, "faiss_index")
     DATABASE_URL: str = f"sqlite:///./{DATA_DIR}/app.db"
 
+    TOP_K: int = 4
+    CHUNK_SIZE: int = 700
+    CHUNK_OVERLAP: int = 100
+
+    SECRET_KEY: str = "change-me-for-production"
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_HOURS: int = 8
+
     ANALYTICS_ALLOWED_EMAILS: str = ""
     FRONTEND_ORIGIN: str = "http://localhost:5173"
     PORT: int = 8000
