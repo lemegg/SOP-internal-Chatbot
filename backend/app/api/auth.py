@@ -18,6 +18,13 @@ class UserResponse(BaseModel):
 
 @router.post("/register", response_model=UserResponse)
 def register(user: UserCreate, db: Session = Depends(get_db)):
+    # Domain restriction
+    if not user.email.endswith("@theaffordableorganicstore.com"):
+        raise HTTPException(
+            status_code=403, 
+            detail="Registration is restricted to @theaffordableorganicstore.com email addresses only."
+        )
+    
     db_user = db.query(User).filter(User.email == user.email).first()
     if db_user:
         raise HTTPException(status_code=400, detail="Email already registered")
