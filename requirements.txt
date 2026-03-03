@@ -1,0 +1,15 @@
+fastapi
+uvicorn
+pydantic
+pydantic-settings
+faiss-cpu
+sentence-transformers
+google-generativeai
+python-docx
+pypdf
+numpy
+python-dotenv
+python-jose[cryptography]
+passlib[bcrypt]
+sqlalchemy
+python-multipart
