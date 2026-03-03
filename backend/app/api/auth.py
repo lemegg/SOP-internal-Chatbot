@@ -22,7 +22,7 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
     if not user.email.endswith("@theaffordableorganicstore.com"):
         raise HTTPException(
             status_code=403, 
-            detail="Registration is restricted to @theaffordableorganicstore.com email addresses only."
+            detail="Registration failed for this email address."
         )
     
     db_user = db.query(User).filter(User.email == user.email).first()
