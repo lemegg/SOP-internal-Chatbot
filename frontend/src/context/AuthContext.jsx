@@ -8,11 +8,12 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   const login = async (email, password) => {
+    const api_base = window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1') ? 'http://127.0.0.1:8000' : '';
     const formData = new FormData();
     formData.append('username', email);
     formData.append('password', password);
 
-    const response = await fetch('http://127.0.0.1:8000/auth/login', {
+    const response = await fetch(`${api_base}/auth/login`, {
       method: 'POST',
       body: formData,
     });
@@ -23,7 +24,7 @@ export const AuthProvider = ({ children }) => {
     setToken(data.access_token);
     
     // Fetch user profile
-    const userRes = await fetch('http://127.0.0.1:8000/auth/me', {
+    const userRes = await fetch(`${api_base}/auth/me`, {
       headers: { 'Authorization': `Bearer ${data.access_token}` }
     });
     const userData = await userRes.json();

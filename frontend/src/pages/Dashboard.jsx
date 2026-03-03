@@ -9,8 +9,9 @@ const Dashboard = () => {
 
   useEffect(() => {
     const fetchAnalytics = async () => {
+      const api_base = window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1') ? 'http://127.0.0.1:8000' : '';
       try {
-        const response = await fetch(`http://127.0.0.1:8000/api/analytics/top-queries?range=${range}`, {
+        const response = await fetch(`${api_base}/api/analytics/top-queries?range=${range}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (!response.ok) throw new Error('Unauthorized');

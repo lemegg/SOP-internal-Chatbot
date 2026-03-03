@@ -16,7 +16,8 @@ const Login = () => {
 
     if (isRegister) {
       try {
-        const res = await fetch('http://127.0.0.1:8000/auth/register', {
+        const api_base = window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1') ? 'http://127.0.0.1:8000' : '';
+        const res = await fetch(`${api_base}/auth/register`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email, password }),
