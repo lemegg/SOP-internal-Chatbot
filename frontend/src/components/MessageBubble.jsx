@@ -1,8 +1,43 @@
-import React from 'react';
+import React, { useState } from 'react';
 import SourcesAccordion from './SourcesAccordion';
+import { useAuth } from '../context/AuthContext';
 
 const MessageBubble = ({ message }) => {
   const isUser = message.sender === 'user';
+  const { token } = useAuth();
+  const [feedbackStatus, setFeedbackStatus] = useState(null); // 'submitting', 'success', 'error'
+  const [submittedFeedback, setSubmittedFeedback] = useState(null); // 'like', 'dislike'
+
+  const handleFeedback = async (type) => {
+    if (!message.query_log_id) return;
+    
+    setFeedbackStatus('submitting');
+    try {
+      const api_base = window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1') ? 'http://127.0.0.1:8000' : '';
+      const response = await fetch(`${api_base}/api/feedback`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          query_log_id: message.query_log_id,
+          feedback: type
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Feedback submission failed');
+      }
+
+      setFeedbackStatus('success');
+      setSubmittedFeedback(type);
+    } catch (err) {
+      console.error('Feedback error:', err);
+      setFeedbackStatus('error');
+    }
+  };
   
   if (isUser) {
     return (
@@ -42,6 +77,37 @@ const MessageBubble = ({ message }) => {
         {notes && notes.length > 0 && (
           <div className="section notes-section">
             {notes.map((note, i) => <p key={i} className="note-item small">{note}</p>)}
+          </div>
+        )}
+
+        {/* Feedback Section */}
+        {message.query_log_id && (
+          <div className="feedback-section">
+            {feedbackStatus === 'success' ? (
+              <span className="feedback-success">Feedback recorded ✓</span>
+            ) : (
+              <>
+                <button 
+                  className={`feedback-btn ${submittedFeedback === 'like' ? 'active' : ''}`}
+                  onClick={() => handleFeedback('like')}
+                  disabled={feedbackStatus === 'submitting'}
+                  title="Helpful"
+                >
+                  👍
+                </button>
+                <button 
+                  className={`feedback-btn ${submittedFeedback === 'dislike' ? 'active' : ''}`}
+                  onClick={() => handleFeedback('dislike')}
+                  disabled={feedbackStatus === 'submitting'}
+                  title="Not Helpful"
+                >
+                  👎
+                </button>
+                {feedbackStatus === 'error' && (
+                  <span className="feedback-error">Failed to send. Try again?</span>
+                )}
+              </>
+            )}
           </div>
         )}
       </div>

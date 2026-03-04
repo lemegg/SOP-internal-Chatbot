@@ -295,3 +295,45 @@ th {
   font-size: 13px;
   text-transform: uppercase;
 }
+
+/* Feedback Section */
+.feedback-section {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 15px;
+  padding-top: 10px;
+  border-top: 1px solid #eee;
+}
+
+.feedback-btn {
+  background: none;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.2s;
+}
+
+.feedback-btn:hover:not(:disabled) {
+  background-color: #f5f5f5;
+  border-color: #ccc;
+}
+
+.feedback-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.feedback-success {
+  color: #2e7d32;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.feedback-error {
+  color: #d32f2f;
+  font-size: 12px;
+}
+

@@ -4,6 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from app.api.chat import router as chat_router
 from app.api.auth import router as auth_router
 from app.api.analytics import router as analytics_router
+from app.api.feedback import router as feedback_router
 from app.models.models import Base
 from app.core.database import engine
 from app.core.config import settings
@@ -42,6 +43,7 @@ app.add_middleware(
 app.include_router(auth_router, prefix="/auth", tags=["auth"])
 app.include_router(chat_router, prefix="/api", tags=["chat"])
 app.include_router(analytics_router, prefix="/api/analytics", tags=["analytics"])
+app.include_router(feedback_router, prefix="/api/feedback", tags=["feedback"])
 
 # Serve the built React frontend
 frontend_path = os.path.join(os.getcwd(), "frontend", "dist")

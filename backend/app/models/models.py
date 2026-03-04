@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, UniqueConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
@@ -20,4 +20,17 @@ class QueryLog(Base):
     timestamp = Column(DateTime, default=datetime.utcnow)
     retrieved_sop = Column(Text)
     response_status = Column(String)
+    user = relationship("User")
+
+class QueryFeedback(Base):
+    __tablename__ = "query_feedback"
+    id = Column(Integer, primary_key=True, index=True)
+    query_log_id = Column(Integer, ForeignKey("query_logs.id"))
+    user_id = Column(Integer, ForeignKey("users.id"))
+    feedback_type = Column(String) # "like" or "dislike"
+    timestamp = Column(DateTime, default=datetime.utcnow)
+    
+    __table_args__ = (UniqueConstraint('query_log_id', 'user_id', name='_user_query_feedback_uc'),)
+    
+    query_log = relationship("QueryLog")
     user = relationship("User")

@@ -39,6 +39,7 @@ class ChatRequest(BaseModel):
     query: str
 
 class ChatResponse(BaseModel):
+    query_log_id: int
     answer: Answer
     sources: List[Source]
 
@@ -77,8 +78,9 @@ async def chat_endpoint(
         )
         db.add(log)
         db.commit()
+        db.refresh(log)
         
-        return ChatResponse(**result)
+        return ChatResponse(query_log_id=log.id, **result)
     except Exception as e:
         print(f"Chat error: {e}")
         import traceback

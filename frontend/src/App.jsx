@@ -40,6 +40,7 @@ const ChatInterface = () => {
       const data = await response.json();
       setMessages((prev) => [...prev, {
         sender: 'bot',
+        query_log_id: data.query_log_id,
         answer: data.answer,
         sources: data.sources,
       }]);
