@@ -6,6 +6,8 @@ from app.core.auth import create_access_token, get_password_hash, verify_passwor
 from app.models.models import User
 from pydantic import BaseModel, EmailStr
 
+from app.core.config import settings
+
 router = APIRouter()
 
 class UserCreate(BaseModel):
@@ -15,6 +17,7 @@ class UserCreate(BaseModel):
 class UserResponse(BaseModel):
     email: str
     id: int
+    is_admin: bool = False
 
 @router.post("/register", response_model=UserResponse)
 def register(user: UserCreate, db: Session = Depends(get_db)):
@@ -35,7 +38,14 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
-    return new_user
+    
+    # Add admin flag to response
+    response_user = UserResponse(
+        email=new_user.email,
+        id=new_user.id,
+        is_admin=new_user.email.lower() in settings.allowed_emails
+    )
+    return response_user
 
 @router.post("/login")
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
@@ -51,4 +61,8 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
 
 @router.get("/me", response_model=UserResponse)
 def get_me(current_user: User = Depends(get_current_user)):
-    return current_user
+    return UserResponse(
+        email=current_user.email,
+        id=current_user.id,
+        is_admin=current_user.email.lower() in settings.allowed_emails
+    )

@@ -1,6 +1,11 @@
 import os
 from pydantic_settings import BaseSettings
 from typing import List
+from dotenv import load_dotenv
+
+# Load .env explicitly from the root project directory
+# Since this file is in backend/app/core/config.py, we look two levels up
+load_dotenv(os.path.join(os.path.dirname(__file__), "../../../.env"), override=True)
 
 class Settings(BaseSettings):
     GEMINI_API_KEY: str = ""
@@ -19,7 +24,7 @@ class Settings(BaseSettings):
     DOCS_DIR: str = os.path.join("backend", "data", "sops")
     INDEX_DIR: str = os.path.join(DATA_DIR, "faiss_index")
 
-    TOP_K: int = 8
+    TOP_K: int = 4
     CHUNK_SIZE: int = 700
     CHUNK_OVERLAP: int = 150
 
@@ -33,7 +38,9 @@ class Settings(BaseSettings):
 
     @property
     def allowed_emails(self) -> List[str]:
-        return [e.strip() for e in self.ANALYTICS_ALLOWED_EMAILS.split(",") if e.strip()]
+        # Handle cases where multiple emails are comma-separated or space-separated
+        raw_list = self.ANALYTICS_ALLOWED_EMAILS.replace(' ', ',').split(',')
+        return [e.strip().lower() for e in raw_list if e.strip()]
 
     model_config = {
         "env_file": ".env",

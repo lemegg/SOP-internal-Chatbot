@@ -67,7 +67,7 @@ const ChatInterface = () => {
       <header className="app-header">
         <span className="user-email">{user?.email}</span>
         <div className="header-actions">
-          {["manager@company.com", "anurag@theaffordableorganicstore.com"].includes(user?.email) && (
+          {user?.is_admin && (
             <button onClick={() => setShowDashboard(true)}>Dashboard</button>
           )}
           <button onClick={logout}>Logout</button>

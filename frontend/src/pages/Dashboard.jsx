@@ -80,14 +80,18 @@ const Dashboard = () => {
                     <th>Rank</th>
                     <th>Query</th>
                     <th>Count</th>
+                    <th>👍 Positive %</th>
+                    <th>👎 Negative %</th>
                   </tr>
                 </thead>
                 <tbody>
                   {data.top_queries.map((item, index) => (
                     <tr key={index}>
-                      <td>{index + 1}</td>
+                      <td>{item.rank}</td>
                       <td>{item.query}</td>
                       <td>{item.count}</td>
+                      <td>{item.positive_percent !== null ? `${item.positive_percent}%` : '—'}</td>
+                      <td>{item.negative_percent !== null ? `${item.negative_percent}%` : '—'}</td>
                     </tr>
                   ))}
                 </tbody>

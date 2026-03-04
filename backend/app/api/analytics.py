@@ -16,13 +16,14 @@ def get_top_queries(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    if current_user.email not in settings.allowed_emails:
+    if current_user.email.lower() not in settings.allowed_emails:
         raise HTTPException(status_code=403, detail="Not authorized to access analytics")
     
     days = 7 if range == "weekly" else 30
     start_date = datetime.utcnow() - timedelta(days=days)
     
-    results = (
+    # 1. Get top queries first
+    top_results = (
         db.query(
             QueryLog.query_text,
             func.count(QueryLog.id).label("count")
@@ -34,9 +35,44 @@ def get_top_queries(
         .all()
     )
     
+    final_results = []
+    for rank, (query_text, count) in enumerate(top_results, 1):
+        # 2. For each query, calculate feedback stats
+        # Get all log IDs for this specific query text
+        log_ids = db.query(QueryLog.id).filter(QueryLog.query_text == query_text).all()
+        log_id_list = [l[0] for l in log_ids]
+        
+        # Count likes and dislikes
+        likes = db.query(func.count(QueryFeedback.id)).filter(
+            QueryFeedback.query_log_id.in_(log_id_list),
+            QueryFeedback.feedback_type == "like"
+        ).scalar()
+        
+        dislikes = db.query(func.count(QueryFeedback.id)).filter(
+            QueryFeedback.query_log_id.in_(log_id_list),
+            QueryFeedback.feedback_type == "dislike"
+        ).scalar()
+        
+        total_feedback = likes + dislikes
+        pos_pct = 0
+        neg_pct = 0
+        
+        if total_feedback > 0:
+            pos_pct = round((likes / total_feedback) * 100)
+            neg_pct = round((dislikes / total_feedback) * 100)
+            
+        final_results.append({
+            "rank": rank,
+            "query": query_text,
+            "count": count,
+            "positive_percent": pos_pct if total_feedback > 0 else None,
+            "negative_percent": neg_pct if total_feedback > 0 else None,
+            "total_feedback": total_feedback
+        })
+    
     return {
         "range": range,
-        "top_queries": [{"query": r[0], "count": r[1]} for r in results]
+        "top_queries": final_results
     }
 
 @router.get("/query-log/monthly")
@@ -44,7 +80,7 @@ def get_monthly_query_log(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    if current_user.email not in settings.allowed_emails:
+    if current_user.email.lower() not in settings.allowed_emails:
         raise HTTPException(status_code=403, detail="Not authorized to access analytics")
     
     start_date = datetime.utcnow() - timedelta(days=30)
