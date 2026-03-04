@@ -1,12 +1,41 @@
 import google.generativeai as genai
 from typing import List, Dict, Any
 import json
+import re
 from app.core.config import settings
 
 class Generator:
     def __init__(self):
         genai.configure(api_key=settings.GEMINI_API_KEY)
         self.model = genai.GenerativeModel(settings.MODEL_NAME)
+
+    def _extract_json(self, text: str) -> Dict[str, Any]:
+        """Robustly extract JSON from text, handling markdown blocks or extra text."""
+        # Clean the text
+        text = text.strip()
+        
+        # 1. Try finding JSON within markdown code blocks
+        json_match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', text, re.DOTALL | re.IGNORECASE)
+        if json_match:
+            try:
+                return json.loads(json_match.group(1))
+            except json.JSONDecodeError:
+                pass
+        
+        # 2. Try finding anything that looks like a JSON object using balanced braces
+        # This is more robust than simple regex for 'Extra data' errors
+        try:
+            start_idx = text.find('{')
+            end_idx = text.rfind('}')
+            if start_idx != -1 and end_idx != -1:
+                json_candidate = text[start_idx:end_idx + 1]
+                return json.loads(json_candidate)
+        except json.JSONDecodeError:
+            pass
+        
+        # 3. Last ditch: clean common LLM garbage and try direct parse
+        cleaned_text = text.replace('```json', '').replace('```', '').strip()
+        return json.loads(cleaned_text)
 
     def generate_answer(self, query: str, context_chunks: List[Dict[str, Any]]) -> Dict[str, Any]:
         if not context_chunks:
@@ -62,16 +91,17 @@ class Generator:
 
         try:
             response = self.model.generate_content(prompt, generation_config={"response_mime_type": "application/json"})
-            return json.loads(response.text.strip())
+            raw_text = response.text.strip()
+            return self._extract_json(raw_text)
         except Exception as e:
-            print(f"AI Generation Error: {e}")
+            print(f"AI Generation/Parse Error: {e}")
             # Fallback for parsing errors or API issues
             return {
                 "answer": {
-                    "summary": f"I encountered an error while processing your request: {str(e)}",
+                    "summary": f"I encountered an error while processing your request. Please try rephrasing your question.",
                     "steps": [],
                     "rules": [],
-                    "notes": ["Please try rephrasing your question or check the logs for more details."]
+                    "notes": [f"Debug info: {str(e)}"]
                 },
                 "sources": []
             }

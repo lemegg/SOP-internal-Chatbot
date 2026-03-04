@@ -250,19 +250,67 @@ button:disabled {
   flex: 1;
 }
 
-.dashboard-header {
+/* Dashboard Tabs */
+.tabs {
+  display: flex;
+  gap: 10px;
+}
+
+.tab-btn {
+  background: #f0f0f0;
+  border: 1px solid #ddd;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.tab-btn.active {
+  background: var(--user-bg);
+  color: white;
+  border-color: var(--user-bg);
+}
+
+.list-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 30px;
+  margin-bottom: 15px;
 }
 
-.range-toggle {
-  display: flex;
-  gap: 5px;
-  background: #eee;
-  padding: 4px;
+.scrollable-table {
+  max-height: 60vh;
+  overflow-y: auto;
+  border: 1px solid var(--border-color);
   border-radius: 8px;
+  margin-top: 15px;
+}
+
+.scrollable-table table {
+  margin-top: 0;
+}
+
+.scrollable-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.loading-state {
+  text-align: center;
+  padding: 40px;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.dashboard-error {
+  color: #d32f2f;
+  background: #fdecea;
+  padding: 20px;
+  border-radius: 8px;
+  margin: 40px;
+  text-align: center;
 }
 
 .range-toggle button {
