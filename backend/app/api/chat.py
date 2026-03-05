@@ -68,13 +68,28 @@ async def chat_endpoint(
         # Generate structured answer
         result = generator.generate_answer(request.query, context_chunks)
         
+        # Estimate token usage
+        # Rule of thumb: ~4 characters per token or ~0.75 words per token
+        context_text = " ".join([c['text'] for c in context_chunks])
+        estimated_input_tokens = len(request.query.split()) + len(context_text.split()) + 500 # + prompt overhead
+        estimated_output_tokens = len(str(result).split())
+        print(f"DEBUG: Estimated Token Usage - Input: ~{estimated_input_tokens}, Output: ~{estimated_output_tokens}")
+        import sys
+        sys.stdout.flush()
+        
         # Log the query
         sop_names = list(set([c.get("sop_name", c.get("sop", "Unknown")) for c in context_chunks]))
+        
+        # Determine status
+        status = "SUCCESS"
+        if not context_chunks or result.get('answer', {}).get('summary') == "Information not found in SOPs":
+            status = "not_found"
+
         log = QueryLog(
             user_id=current_user.id,
             query_text=request.query,
             retrieved_sop=", ".join(sop_names) if sop_names else "NONE",
-            response_status="SUCCESS"
+            response_status=status
         )
         db.add(log)
         db.commit()

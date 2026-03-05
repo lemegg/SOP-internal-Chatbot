@@ -114,3 +114,34 @@ def get_monthly_query_log(
         })
         
     return {"logs": logs}
+
+@router.get("/sop-missed")
+def get_sop_missed_queries(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    if current_user.email.lower() not in settings.allowed_emails:
+        raise HTTPException(status_code=403, detail="Not authorized to access analytics")
+    
+    results = (
+        db.query(
+            QueryLog.query_text,
+            QueryLog.timestamp,
+            User.email
+        )
+        .join(User, QueryLog.user_id == User.id)
+        .filter(QueryLog.response_status == "not_found")
+        .order_by(QueryLog.timestamp.desc())
+        .limit(100)
+        .all()
+    )
+    
+    logs = []
+    for r in results:
+        logs.append({
+            "query": r[0],
+            "timestamp": r[1].isoformat(),
+            "person": r[2]
+        })
+        
+    return {"logs": logs}

@@ -18,6 +18,8 @@ const Dashboard = () => {
       let url = `${api_base}/api/analytics/top-queries?range=${range}`;
       if (activeTab === 'query-log') {
         url = `${api_base}/api/analytics/query-log/monthly`;
+      } else if (activeTab === 'sop-missed') {
+        url = `${api_base}/api/analytics/sop-missed`;
       }
 
       try {
@@ -57,6 +59,12 @@ const Dashboard = () => {
             onClick={() => setActiveTab('query-log')}
           >
             Monthly Query Log
+          </button>
+          <button 
+            className={`tab-btn ${activeTab === 'sop-missed' ? 'active' : ''}`}
+            onClick={() => setActiveTab('sop-missed')}
+          >
+            SOP Missed Queries
           </button>
         </div>
       </header>
@@ -121,6 +129,32 @@ const Dashboard = () => {
                         <td style={{ textAlign: 'center' }}>
                           {log.feedback === 'like' ? '👍' : log.feedback === 'dislike' ? '👎' : '—'}
                         </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'sop-missed' && data?.logs && (
+            <div className="queries-list">
+              <h3>SOP Missed Queries (Information Not Found)</h3>
+              <div className="scrollable-table">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Query</th>
+                      <th>Timestamp</th>
+                      <th>Person</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.logs.map((log, index) => (
+                      <tr key={index}>
+                        <td>{log.query}</td>
+                        <td style={{ whiteSpace: 'nowrap' }}>{new Date(log.timestamp).toLocaleString()}</td>
+                        <td>{log.person}</td>
                       </tr>
                     ))}
                   </tbody>

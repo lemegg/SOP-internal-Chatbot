@@ -385,3 +385,13 @@ th {
   font-size: 12px;
 }
 
+.inline-link {
+  color: var(--user-bg);
+  text-decoration: underline;
+  font-weight: 500;
+}
+
+.inline-link:hover {
+  opacity: 0.8;
+}
+

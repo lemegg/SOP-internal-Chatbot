@@ -54,10 +54,28 @@ class Ingestor:
         filename = os.path.basename(file_path)
         
         full_text = ""
+        links = []
+        
         for page in reader.pages:
+            # Extract regular text
             text = page.extract_text()
             if text:
                 full_text += text + "\n"
+            
+            # Extract links from annotations
+            if "/Annots" in page:
+                for annot in page["/Annots"]:
+                    obj = annot.get_object()
+                    if "/A" in obj and "/URI" in obj["/A"]:
+                        uri = obj["/A"]["/URI"]
+                        # Try to find context for the link if possible
+                        # For now, just collect them
+                        links.append(uri)
+        
+        # Append found links to the end of the text so they are indexed
+        if links:
+            full_text += "\n--- Document Links ---\n"
+            full_text += "\n".join(list(set(links)))
         
         metadata = {
             "sop_name": filename,

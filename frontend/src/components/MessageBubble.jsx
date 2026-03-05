@@ -50,17 +50,34 @@ const MessageBubble = ({ message }) => {
   // Bot message rendering for structured answer
   const { summary, steps, rules, notes } = message.answer || {};
 
+  // Simple function to render markdown links [Text](url)
+  const renderTextWithLinks = (text) => {
+    if (!text) return null;
+    const parts = text.split(/(\[.*?\]\(.*?\))/g);
+    return parts.map((part, i) => {
+      const match = part.match(/\[(.*?)\]\((.*?)\)/);
+      if (match) {
+        return (
+          <a key={i} href={match[2]} target="_blank" rel="noopener noreferrer" className="inline-link">
+            {match[1]}
+          </a>
+        );
+      }
+      return part;
+    });
+  };
+
   return (
     <div className="message bot">
       <div className="bot-content">
-        {message.text && <p className="summary">{message.text}</p>}
-        {summary && <p className="summary">{summary}</p>}
+        {message.text && <p className="summary">{renderTextWithLinks(message.text)}</p>}
+        {summary && <p className="summary">{renderTextWithLinks(summary)}</p>}
         
         {steps && steps.length > 0 && (
           <div className="section">
             <h4 className="section-title">Steps:</h4>
             <ol className="steps-list">
-              {steps.map((step, i) => <li key={i}>{step}</li>)}
+              {steps.map((step, i) => <li key={i}>{renderTextWithLinks(step)}</li>)}
             </ol>
           </div>
         )}
@@ -69,14 +86,14 @@ const MessageBubble = ({ message }) => {
           <div className="section">
             <h4 className="section-title">Policies & Rules:</h4>
             <ul className="rules-list">
-              {rules.map((rule, i) => <li key={i}>{rule}</li>)}
+              {rules.map((rule, i) => <li key={i}>{renderTextWithLinks(rule)}</li>)}
             </ul>
           </div>
         )}
 
         {notes && notes.length > 0 && (
           <div className="section notes-section">
-            {notes.map((note, i) => <p key={i} className="note-item small">{note}</p>)}
+            {notes.map((note, i) => <p key={i} className="note-item small">{renderTextWithLinks(note)}</p>)}
           </div>
         )}
 
