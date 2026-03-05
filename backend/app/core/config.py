@@ -9,7 +9,7 @@ load_dotenv(os.path.join(os.path.dirname(__file__), "../../../.env"), override=T
 
 class Settings(BaseSettings):
     GEMINI_API_KEY: str = ""
-    MODEL_NAME: str = "models/gemini-flash-latest"
+    MODEL_NAME: str = "models/gemini-1.5-flash"
     EMBEDDING_MODEL_NAME: str = "sentence-transformers/all-MiniLM-L6-v2"
     
     # Base directory for persistent data
