@@ -76,6 +76,11 @@ check_and_ingest()
 
 app = FastAPI(title="RAG Chatbot")
 
+@app.get("/sentry-debug")
+async def trigger_error():
+    division_by_zero = 1 / 0
+    return {"message": "This will never be reached"}
+
 # CORS Configuration
 app.add_middleware(
     CORSMiddleware,
@@ -96,6 +101,10 @@ app.include_router(analytics_router, prefix="/api/analytics", tags=["analytics"]
 app.include_router(feedback_router, prefix="/api/feedback", tags=["feedback"])
 app.include_router(admin_router, prefix="/api/admin", tags=["admin"])
 
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy"}
+
 # Serve the built React frontend
 frontend_path = os.path.join(os.getcwd(), "frontend", "dist")
 if os.path.exists(frontend_path):
@@ -104,11 +113,6 @@ else:
     @app.get("/")
     async def root():
         return {"message": "API is running. Frontend build not found."}
-
-@app.get("/sentry-debug")
-async def trigger_error():
-    division_by_zero = 1 / 0
-    return {"message": "This will never be reached"}
 
 if __name__ == "__main__":
     import uvicorn
