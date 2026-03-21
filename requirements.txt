@@ -16,3 +16,4 @@ sqlalchemy
 python-multipart
 email-validator
 pdfplumber
+sentry-sdk[fastapi]

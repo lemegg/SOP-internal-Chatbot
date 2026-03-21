@@ -5,10 +5,26 @@ from app.api.chat import router as chat_router
 from app.api.auth import router as auth_router
 from app.api.analytics import router as analytics_router
 from app.api.feedback import router as feedback_router
+from app.api.admin import router as admin_router
 from app.models.models import Base
 from app.core.database import engine
 from app.core.config import settings
 import os
+import sentry_sdk
+from sentry_sdk.integrations.fastapi import FastAPIIntegration
+
+# Initialize Sentry
+if settings.SENTRY_DSN:
+    sentry_sdk.init(
+        dsn=settings.SENTRY_DSN,
+        integrations=[FastAPIIntegration()],
+        # Set traces_sample_rate to 1.0 to capture 100%
+        # of transactions for performance monitoring.
+        traces_sample_rate=1.0,
+        # Set profiles_sample_rate to 1.0 to profile 100%
+        # of transactions.
+        profiles_sample_rate=1.0,
+    )
 
 # Initialize database
 Base.metadata.create_all(bind=engine)
@@ -79,6 +95,7 @@ app.include_router(auth_router, prefix="/auth", tags=["auth"])
 app.include_router(chat_router, prefix="/api", tags=["chat"])
 app.include_router(analytics_router, prefix="/api/analytics", tags=["analytics"])
 app.include_router(feedback_router, prefix="/api/feedback", tags=["feedback"])
+app.include_router(admin_router, prefix="/api/admin", tags=["admin"])
 
 # Serve the built React frontend
 frontend_path = os.path.join(os.getcwd(), "frontend", "dist")
@@ -88,6 +105,11 @@ else:
     @app.get("/")
     async def root():
         return {"message": "API is running. Frontend build not found."}
+
+@app.get("/sentry-debug")
+async def trigger_error():
+    division_by_zero = 1 / 0
+    return {"message": "This will never be reached"}
 
 if __name__ == "__main__":
     import uvicorn

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '@clerk/clerk-react';
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('top-queries');
@@ -7,7 +7,7 @@ const Dashboard = () => {
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
-  const { token } = useAuth();
+  const { getToken } = useAuth();
 
   useEffect(() => {
     const fetchAnalytics = async () => {
@@ -23,6 +23,7 @@ const Dashboard = () => {
       }
 
       try {
+        const token = await getToken();
         const response = await fetch(url, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -39,7 +40,7 @@ const Dashboard = () => {
       }
     };
     fetchAnalytics();
-  }, [range, activeTab, token]);
+  }, [range, activeTab, getToken]);
 
   if (error) return <div className="dashboard-error">Access Denied: {error}</div>;
 
@@ -66,6 +67,12 @@ const Dashboard = () => {
           >
             SOP Missed Queries
           </button>
+          <button 
+            className={`tab-btn ${activeTab === 'users' ? 'active' : ''}`}
+            onClick={() => setActiveTab('users')}
+          >
+            User Management
+          </button>
         </div>
       </header>
 
@@ -73,6 +80,7 @@ const Dashboard = () => {
         <div className="loading-state">Loading dashboard data...</div>
       ) : (
         <>
+          {activeTab === 'users' && <UserManagement getToken={getToken} />}
           {activeTab === 'top-queries' && data?.top_queries && (
             <div className="queries-list">
               <div className="list-header">
@@ -164,6 +172,134 @@ const Dashboard = () => {
           )}
         </>
       )}
+    </div>
+  );
+};
+
+const UserManagement = ({ getToken }) => {
+  const [data, setData] = useState({ active_users: [], pending_invites: [] });
+  const [loading, setLoading] = useState(true);
+  const [email, setEmail] = useState('');
+  const [msg, setMsg] = useState({ type: '', text: '' });
+
+  const api_base = window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1') ? 'http://127.0.0.1:8000' : '';
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const token = await getToken();
+      const resp = await fetch(`${api_base}/api/admin/users`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!resp.ok) throw new Error('Failed to fetch users');
+      setData(await resp.json());
+    } catch (err) {
+      setMsg({ type: 'error', text: err.message });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchData(); }, []);
+
+  const handleInvite = async (e) => {
+    e.preventDefault();
+    setMsg({ type: '', text: '' });
+    try {
+      const token = await getToken();
+      const resp = await fetch(`${api_base}/api/admin/invite`, {
+        method: 'POST',
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email })
+      });
+      if (!resp.ok) {
+        const d = await resp.json();
+        throw new Error(d.detail || 'Invite failed');
+      }
+      setMsg({ type: 'success', text: `Invitation sent to ${email}` });
+      setEmail('');
+      fetchData();
+    } catch (err) {
+      setMsg({ type: 'error', text: err.message });
+    }
+  };
+
+  const handleAction = async (url, method = 'POST') => {
+    if (!window.confirm('Are you sure?')) return;
+    try {
+      const token = await getToken();
+      const resp = await fetch(`${api_base}${url}`, {
+        method,
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!resp.ok) throw new Error('Action failed');
+      fetchData();
+    } catch (err) {
+      setMsg({ type: 'error', text: err.message });
+    }
+  };
+
+  return (
+    <div className="user-management">
+      <div className="invite-box">
+        <h3>Grant Access (Invite by Email)</h3>
+        <form onSubmit={handleInvite}>
+          <input 
+            type="email" 
+            placeholder="colleague@example.com" 
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+          <button type="submit">Invite User</button>
+        </form>
+        {msg.text && <p className={`status-msg ${msg.type}`}>{msg.text}</p>}
+      </div>
+
+      <div className="users-lists">
+        <div className="list-section">
+          <h3>Active Users ({data.active_users.length})</h3>
+          <table>
+            <thead>
+              <tr><th>Email</th><th>Joined</th><th>Action</th></tr>
+            </thead>
+            <tbody>
+              {data.active_users.map(u => (
+                <tr key={u.id}>
+                  <td>{u.email}</td>
+                  <td>{new Date(u.joined_at).toLocaleDateString()}</td>
+                  <td>
+                    <button onClick={() => handleAction(`/api/admin/users/${u.id}`, 'DELETE')} className="revoke-btn">Revoke Access</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="list-section">
+          <h3>Pending Invitations ({data.pending_invites.length})</h3>
+          <table>
+            <thead>
+              <tr><th>Email</th><th>Sent</th><th>Action</th></tr>
+            </thead>
+            <tbody>
+              {data.pending_invites.map(i => (
+                <tr key={i.id}>
+                  <td>{i.email}</td>
+                  <td>{new Date(i.sent_at).toLocaleDateString()}</td>
+                  <td>
+                    <button onClick={() => handleAction(`/api/admin/invitations/${i.id}/revoke`)} className="revoke-btn">Cancel Invite</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 };

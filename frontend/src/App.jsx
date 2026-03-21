@@ -3,7 +3,7 @@ import ChatWindow from './components/ChatWindow';
 import ChatInput from './components/ChatInput';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { SignedIn, SignedOut, SignOutButton, useUser, useAuth } from '@clerk/clerk-react';
 
 const ChatInterface = () => {
   const [messages, setMessages] = useState([
@@ -13,7 +13,8 @@ const ChatInterface = () => {
     }
   ]);
   const [loading, setLoading] = useState(false);
-  const { token, logout, user } = useAuth();
+  const { getToken } = useAuth();
+  const { user } = useUser();
   const [showDashboard, setShowDashboard] = useState(false);
 
   const handleSendMessage = async (text) => {
@@ -22,6 +23,7 @@ const ChatInterface = () => {
     setLoading(true);
 
     try {
+      const token = await getToken();
       const api_url = window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1')
         ? 'http://127.0.0.1:8000/api/chat' 
         : '/api/chat';
@@ -54,7 +56,6 @@ const ChatInterface = () => {
     }
   };
 
-  if (!token) return <Login />;
   if (showDashboard) return (
     <>
       <button className="nav-btn" onClick={() => setShowDashboard(false)}>Back to Chat</button>
@@ -62,15 +63,19 @@ const ChatInterface = () => {
     </>
   );
 
+  const isAdmin = user?.publicMetadata?.role === 'admin' || user?.emailAddresses.some(e => 
+    ["worshipgate1@gmail.com"].includes(e.emailAddress)
+  );
+
   return (
     <div id="root">
       <header className="app-header">
-        <span className="user-email">{user?.email}</span>
+        <span className="user-email">{user?.primaryEmailAddress?.emailAddress}</span>
         <div className="header-actions">
-          {user?.is_admin && (
+          {isAdmin && (
             <button onClick={() => setShowDashboard(true)}>Dashboard</button>
           )}
-          <button onClick={logout}>Logout</button>
+          <SignOutButton className="logout-btn" />
         </div>
       </header>
       <ChatWindow messages={messages} isThinking={loading} />
@@ -80,9 +85,14 @@ const ChatInterface = () => {
 };
 
 const App = () => (
-  <AuthProvider>
-    <ChatInterface />
-  </AuthProvider>
+  <>
+    <SignedIn>
+      <ChatInterface />
+    </SignedIn>
+    <SignedOut>
+      <Login />
+    </SignedOut>
+  </>
 );
 
 export default App;

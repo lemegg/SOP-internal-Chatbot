@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import SourcesAccordion from './SourcesAccordion';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '@clerk/clerk-react';
 
 const MessageBubble = ({ message }) => {
   const isUser = message.sender === 'user';
-  const { token } = useAuth();
+  const { getToken } = useAuth();
   const [feedbackStatus, setFeedbackStatus] = useState(null); // 'submitting', 'success', 'error'
   const [submittedFeedback, setSubmittedFeedback] = useState(null); // 'like', 'dislike'
 
@@ -13,6 +13,7 @@ const MessageBubble = ({ message }) => {
     
     setFeedbackStatus('submitting');
     try {
+      const token = await getToken();
       const api_base = window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1') ? 'http://127.0.0.1:8000' : '';
       const response = await fetch(`${api_base}/api/feedback`, {
         method: 'POST',

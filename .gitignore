@@ -27,3 +27,4 @@ frontend/dist/
 # Debug scripts
 test_register.py
 debug_register.py
+backend_debug.log

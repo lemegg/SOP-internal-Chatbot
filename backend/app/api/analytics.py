@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from datetime import datetime, timedelta
@@ -10,15 +10,22 @@ from typing import List
 
 router = APIRouter()
 
+async def check_is_admin(current_user: User = Depends(get_current_user)):
+    # Check both the dynamic is_admin flag (from metadata) and the allowed_emails list
+    is_admin = getattr(current_user, "is_admin", False)
+    if not is_admin and current_user.email.lower() not in settings.allowed_emails:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to access analytics"
+        )
+    return current_user
+
 @router.get("/top-queries")
 def get_top_queries(
-    range: str = Query("weekly", regex="^(weekly|monthly)$"),
+    range: str = Query("weekly", pattern="^(weekly|monthly)$"),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    admin: User = Depends(check_is_admin)
 ):
-    if current_user.email.lower() not in settings.allowed_emails:
-        raise HTTPException(status_code=403, detail="Not authorized to access analytics")
-    
     days = 7 if range == "weekly" else 30
     start_date = datetime.utcnow() - timedelta(days=days)
     
@@ -78,17 +85,10 @@ def get_top_queries(
 @router.get("/query-log/monthly")
 def get_monthly_query_log(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    admin: User = Depends(check_is_admin)
 ):
-    if current_user.email.lower() not in settings.allowed_emails:
-        raise HTTPException(status_code=403, detail="Not authorized to access analytics")
-    
     start_date = datetime.utcnow() - timedelta(days=30)
     
-    # Query with joins to User and QueryFeedback
-    # We use a subquery or conditional logic for feedback prioritization if multiple exist
-    # But since the unique constraint prevents multiple feedback per user/query, 
-    # we just need to join.
     results = (
         db.query(
             QueryLog.query_text,
@@ -118,11 +118,8 @@ def get_monthly_query_log(
 @router.get("/sop-missed")
 def get_sop_missed_queries(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    admin: User = Depends(check_is_admin)
 ):
-    if current_user.email.lower() not in settings.allowed_emails:
-        raise HTTPException(status_code=403, detail="Not authorized to access analytics")
-    
     results = (
         db.query(
             QueryLog.query_text,

@@ -32,9 +32,13 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_HOURS: int = 8
 
+    CLERK_SECRET_KEY: str = ""
+    CLERK_ISSUER_URL: str = "" # e.g., https://clerk.your-domain.com or https://your-app.clerk.accounts.dev
+
     ANALYTICS_ALLOWED_EMAILS: str = ""
     FRONTEND_ORIGIN: str = "http://localhost:5173"
     PORT: int = 8000
+    SENTRY_DSN: str = ""
 
     @property
     def allowed_emails(self) -> List[str]:
