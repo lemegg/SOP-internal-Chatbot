@@ -11,19 +11,18 @@ from app.core.database import engine
 from app.core.config import settings
 import os
 import sentry_sdk
-from sentry_sdk.integrations.fastapi import FastAPIIntegration
 
 # Initialize Sentry
 if settings.SENTRY_DSN:
     sentry_sdk.init(
         dsn=settings.SENTRY_DSN,
-        integrations=[FastAPIIntegration()],
         # Set traces_sample_rate to 1.0 to capture 100%
         # of transactions for performance monitoring.
         traces_sample_rate=1.0,
         # Set profiles_sample_rate to 1.0 to profile 100%
         # of transactions.
         profiles_sample_rate=1.0,
+        # Sentry 2.0+ automatically detects FastAPI, Starlette, etc.
     )
 
 # Initialize database
