@@ -424,21 +424,36 @@ th {
 }
 
 .users-lists {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
 }
 
-@media (max-width: 768px) {
-  .users-lists {
-    grid-template-columns: 1fr;
-  }
+.list-section {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.list-section table {
+  min-width: 100%;
 }
 
 .list-section h3 {
   margin-bottom: 15px;
   font-size: 1.1rem;
   color: var(--text-primary);
+}
+
+.action-cell {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-width: 140px;
+}
+
+.revoke-btn, .resend-btn {
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .revoke-btn {

@@ -271,7 +271,7 @@ const UserManagement = ({ getToken }) => {
                 <tr key={u.id}>
                   <td>{u.email}</td>
                   <td>{new Date(u.joined_at).toLocaleDateString()}</td>
-                  <td>
+                  <td className="action-cell">
                     <button onClick={() => handleAction(`/api/admin/users/${u.id}`, 'DELETE')} className="revoke-btn">Revoke Access</button>
                   </td>
                 </tr>
@@ -291,7 +291,7 @@ const UserManagement = ({ getToken }) => {
                 <tr key={i.id}>
                   <td>{i.email}</td>
                   <td>{new Date(i.sent_at).toLocaleDateString()}</td>
-                  <td style={{ display: 'flex', gap: '8px' }}>
+                  <td className="action-cell">
                     <button onClick={() => handleAction(`/api/admin/invitations/${i.id}/resend`, 'POST')} className="resend-btn">Resend</button>
                     <button onClick={() => handleAction(`/api/admin/invitations/${i.id}/revoke`, 'POST')} className="revoke-btn">Cancel</button>
                   </td>
