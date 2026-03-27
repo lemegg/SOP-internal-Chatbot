@@ -15,30 +15,11 @@ const ChatInterface = () => {
   const [loading, setLoading] = useState(false);
   const { getToken } = useAuth();
   const { user } = useUser();
-  const [isAdmin, setIsAdmin] = useState(false);
   const [showDashboard, setShowDashboard] = useState(false);
 
-  React.useEffect(() => {
-    const checkAdmin = async () => {
-      try {
-        const token = await getToken();
-        const api_base = window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1')
-          ? 'http://127.0.0.1:8000' 
-          : '';
-        
-        const response = await fetch(`${api_base}/api/auth/me`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (response.ok) {
-          const data = await response.json();
-          setIsAdmin(data.is_admin);
-        }
-      } catch (err) {
-        console.error("Error checking admin status:", err);
-      }
-    };
-    if (user) checkAdmin();
-  }, [user, getToken]);
+  const isAdmin = user?.publicMetadata?.role === 'admin' || user?.emailAddresses.some(e => 
+    ["worshipgate1@gmail.com", "sruthi@theaffordableorganicstore.com", "anurag@theaffordableorganicstore.com", "shivam@theaffordableorganicstore.com"].includes(e.emailAddress.toLowerCase())
+  );
 
   const handleSendMessage = async (text) => {
     const userMsg = { sender: 'user', text };
