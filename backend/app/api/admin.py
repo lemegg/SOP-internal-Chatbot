@@ -28,9 +28,9 @@ async def list_access_control(admin: User = Depends(check_is_admin)):
     headers = get_admin_headers()
     async with httpx.AsyncClient() as client:
         # Fetch active users
-        users_resp = await client.get(f"{CLERK_API_BASE}/users", headers=headers)
+        users_resp = await client.get(f"{CLERK_API_BASE}/users?limit=500", headers=headers)
         # Fetch pending invitations
-        invites_resp = await client.get(f"{CLERK_API_BASE}/invitations", headers=headers)
+        invites_resp = await client.get(f"{CLERK_API_BASE}/invitations?limit=500", headers=headers)
         
         if users_resp.status_code != 200 or invites_resp.status_code != 200:
             raise HTTPException(status_code=500, detail="Failed to fetch data from Clerk")
@@ -122,7 +122,7 @@ async def resend_invitation(invitation_id: str, request: Request, admin: User = 
     headers = get_admin_headers()
     async with httpx.AsyncClient() as client:
         # 1. Get the current invitation to find the email address
-        inv_resp = await client.get(f"{CLERK_API_BASE}/invitations", headers=headers)
+        inv_resp = await client.get(f"{CLERK_API_BASE}/invitations?limit=500", headers=headers)
         if inv_resp.status_code != 200:
             raise HTTPException(status_code=500, detail="Failed to fetch invitations from Clerk")
         
