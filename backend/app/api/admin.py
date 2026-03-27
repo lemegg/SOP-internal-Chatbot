@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from typing import List, Dict, Any
 import httpx
 from app.core.config import settings
@@ -60,17 +60,30 @@ async def list_access_control(admin: User = Depends(check_is_admin)):
         }
 
 @router.post("/invite")
-async def invite_user(payload: Dict[str, str], admin: User = Depends(check_is_admin)):
+async def invite_user(payload: Dict[str, str], request: Request, admin: User = Depends(check_is_admin)):
     email = payload.get("email")
     if not email:
         raise HTTPException(status_code=400, detail="Email is required")
+    
+    # Try to determine the actual origin of the app for the invitation link
+    # This avoids using placeholder domains like 'your-app-domain.up.railway.app'
+    redirect_url = settings.FRONTEND_ORIGIN
+    
+    # If FRONTEND_ORIGIN is a placeholder or default, try to use the request host
+    if "your-app-domain" in redirect_url or "localhost" in redirect_url:
+        origin = request.headers.get("origin") or request.headers.get("referer")
+        if origin:
+            # Strip trailing slash and path if it's referer
+            from urllib.parse import urlparse
+            parsed = urlparse(origin)
+            redirect_url = f"{parsed.scheme}://{parsed.netloc}"
         
     headers = get_admin_headers()
     async with httpx.AsyncClient() as client:
         resp = await client.post(
             f"{CLERK_API_BASE}/invitations",
             headers=headers,
-            json={"email_address": email, "redirect_url": settings.FRONTEND_ORIGIN}
+            json={"email_address": email, "redirect_url": redirect_url}
         )
         
         if resp.status_code != 200:
