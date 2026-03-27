@@ -17,7 +17,7 @@ const ChatInterface = () => {
   const { user } = useUser();
   const [showDashboard, setShowDashboard] = useState(false);
 
-  const isAdmin = user?.publicMetadata?.role === 'admin' || user?.emailAddresses.some(e => 
+  const isAdmin = user?.emailAddresses.some(e => 
     ["worshipgate1@gmail.com", "sruthi@theaffordableorganicstore.com", "anurag@theaffordableorganicstore.com", "shivam@theaffordableorganicstore.com"].includes(e.emailAddress.toLowerCase())
   );
 

@@ -74,16 +74,14 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
             db.refresh(user)
 
         # Check if user is admin
-        metadata = payload.get("public_metadata", {})
-        
         # Check allowed_emails (case-insensitive)
         email_is_allowed = False
         if email:
             email_is_allowed = email.lower() in [e.lower() for e in settings.allowed_emails]
             
-        is_admin = (metadata.get("role") == "admin" or email_is_allowed)
+        is_admin = email_is_allowed
         
-        print(f"DEBUG: Clerk Auth - is_admin result: {is_admin} (metadata role: {metadata.get('role')}, email allowed: {email_is_allowed})", flush=True)
+        print(f"DEBUG: Clerk Auth - is_admin result: {is_admin} (email allowed: {email_is_allowed})", flush=True)
 
         # Attach is_admin to the user object temporarily for this request
         user.is_admin = is_admin
