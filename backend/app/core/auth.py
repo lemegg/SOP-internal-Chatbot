@@ -45,23 +45,29 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
             options={"verify_aud": False}
         )
         
-        # In Clerk Session tokens, email is often in 'email' or we might need to use 'sub'
-        # Let's check common Clerk payload keys
-        email = payload.get("email")
-        if not email:
-            # Try to get from metadata if you mapped it, or just use sub as a fallback
-            # But for allowed_emails check, we REALLY need the email.
-            # If email is missing from JWT, we might need to fetch it from Clerk API (slow)
-            # OR ensure it's in the Session Token via Clerk Dashboard.
-            email = payload.get("sub") # Fallback to ID
-            
-        print(f"DEBUG: Full Clerk Payload Keys: {list(payload.keys())}", flush=True)
-        print(f"DEBUG: Clerk Auth - Email: {email}, Metadata: {payload.get('public_metadata')}", flush=True)
+        print(f"DEBUG: Clerk Auth - Payload keys: {list(payload.keys())}", flush=True)
+        
+        # Try different possible email keys in Clerk
+        email = (
+            payload.get("email") or 
+            payload.get("email_address") or 
+            payload.get("primary_email_address") or
+            payload.get("preferred_username")
+        )
+        
+        # If we still don't have an email, but 'sub' looks like an email
+        if not email and payload.get("sub") and "@" in payload.get("sub"):
+            email = payload.get("sub")
 
-        # Sync with local database to maintain compatibility with existing models
+        if not email:
+            # Fallback to sub but warn it's an ID
+            email = payload.get("sub") 
+            
+        print(f"DEBUG: Clerk Auth - Final Email used for check: {email}", flush=True)
+
+        # Sync with local database
         user = db.query(User).filter(User.email == email).first()
         if not user:
-            # If we only have the ID (sub), the allowed_emails check will fail.
             user = User(email=email, hashed_password="CLERK_AUTHED")
             db.add(user)
             db.commit()
@@ -69,7 +75,15 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
 
         # Check if user is admin
         metadata = payload.get("public_metadata", {})
-        is_admin = metadata.get("role") == "admin" or email.lower() in settings.allowed_emails
+        
+        # Check allowed_emails (case-insensitive)
+        email_is_allowed = False
+        if email:
+            email_is_allowed = email.lower() in [e.lower() for e in settings.allowed_emails]
+            
+        is_admin = (metadata.get("role") == "admin" or email_is_allowed)
+        
+        print(f"DEBUG: Clerk Auth - is_admin result: {is_admin} (metadata role: {metadata.get('role')}, email allowed: {email_is_allowed})", flush=True)
 
         # Attach is_admin to the user object temporarily for this request
         user.is_admin = is_admin
