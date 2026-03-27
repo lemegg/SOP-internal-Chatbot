@@ -455,6 +455,20 @@ th {
   background: #e60000 !important;
 }
 
+.resend-btn {
+  background: #28a745 !important;
+  color: white !important;
+  font-size: 11px !important;
+  padding: 4px 10px !important;
+  border: none !important;
+  border-radius: 4px !important;
+  cursor: pointer;
+}
+
+.resend-btn:hover {
+  background: #218838 !important;
+}
+
 .status-msg {
   margin-top: 10px;
   font-size: 14px;

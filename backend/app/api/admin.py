@@ -116,3 +116,45 @@ async def revoke_invitation(invitation_id: str, admin: User = Depends(check_is_a
             raise HTTPException(status_code=resp.status_code, detail="Failed to revoke invitation")
             
         return {"message": "Invitation revoked successfully"}
+
+@router.post("/invitations/{invitation_id}/resend")
+async def resend_invitation(invitation_id: str, request: Request, admin: User = Depends(check_is_admin)):
+    headers = get_admin_headers()
+    async with httpx.AsyncClient() as client:
+        # 1. Get the current invitation to find the email address
+        inv_resp = await client.get(f"{CLERK_API_BASE}/invitations", headers=headers)
+        if inv_resp.status_code != 200:
+            raise HTTPException(status_code=500, detail="Failed to fetch invitations from Clerk")
+        
+        all_invites = inv_resp.json()
+        target_invite = next((i for i in all_invites if i["id"] == invitation_id), None)
+        
+        if not target_invite:
+            raise HTTPException(status_code=404, detail="Invitation not found")
+            
+        email = target_invite["email_address"]
+        
+        # 2. Revoke the old invitation
+        revoke_resp = await client.post(f"{CLERK_API_BASE}/invitations/{invitation_id}/revoke", headers=headers)
+        # Note: If already revoked, we proceed anyway to ensure a new one is sent
+        
+        # 3. Create a new invitation (using the same logic as /invite)
+        redirect_url = settings.FRONTEND_ORIGIN
+        if "your-app-domain" in redirect_url or "localhost" in redirect_url:
+            origin = request.headers.get("origin") or request.headers.get("referer")
+            if origin:
+                from urllib.parse import urlparse
+                parsed = urlparse(origin)
+                redirect_url = f"{parsed.scheme}://{parsed.netloc}"
+                
+        new_inv_resp = await client.post(
+            f"{CLERK_API_BASE}/invitations",
+            headers=headers,
+            json={"email_address": email, "redirect_url": redirect_url}
+        )
+        
+        if new_inv_resp.status_code != 200:
+            error_detail = new_inv_resp.json().get("errors", [{"message": "Resend failed"}])[0]["message"]
+            raise HTTPException(status_code=new_inv_resp.status_code, detail=error_detail)
+            
+        return {"message": f"Invitation resent to {email}", "new_invitation": new_inv_resp.json()}

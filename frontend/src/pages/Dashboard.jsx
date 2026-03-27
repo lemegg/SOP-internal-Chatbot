@@ -291,8 +291,9 @@ const UserManagement = ({ getToken }) => {
                 <tr key={i.id}>
                   <td>{i.email}</td>
                   <td>{new Date(i.sent_at).toLocaleDateString()}</td>
-                  <td>
-                    <button onClick={() => handleAction(`/api/admin/invitations/${i.id}/revoke`)} className="revoke-btn">Cancel Invite</button>
+                  <td style={{ display: 'flex', gap: '8px' }}>
+                    <button onClick={() => handleAction(`/api/admin/invitations/${i.id}/resend`, 'POST')} className="resend-btn">Resend</button>
+                    <button onClick={() => handleAction(`/api/admin/invitations/${i.id}/revoke`, 'POST')} className="revoke-btn">Cancel</button>
                   </td>
                 </tr>
               ))}
