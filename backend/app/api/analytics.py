@@ -11,9 +11,8 @@ from typing import List
 router = APIRouter()
 
 async def check_is_admin(current_user: User = Depends(get_current_user)):
-    # Check both the dynamic is_admin flag (from metadata) and the allowed_emails list
-    is_admin = getattr(current_user, "is_admin", False)
-    if not is_admin and current_user.email.lower() not in settings.allowed_emails:
+    # The is_admin flag is now strictly hardcoded in get_current_user logic
+    if not getattr(current_user, "is_admin", False):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to access analytics"

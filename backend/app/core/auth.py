@@ -73,15 +73,20 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
             db.commit()
             db.refresh(user)
 
-        # Check if user is admin
-        # Check allowed_emails (case-insensitive)
-        email_is_allowed = False
-        if email:
-            email_is_allowed = email.lower() in [e.lower() for e in settings.allowed_emails]
-            
-        is_admin = email_is_allowed
+        # HARDCODED ADMIN LIST
+        ADMIN_EMAILS = [
+            "worshipgate1@gmail.com",
+            "sruthi@theaffordableorganicstore.com",
+            "anurag@theaffordableorganicstore.com",
+            "shivam@theaffordableorganicstore.com"
+        ]
         
-        print(f"DEBUG: Clerk Auth - is_admin result: {is_admin} (email allowed: {email_is_allowed})", flush=True)
+        # Check if user email is in the hardcoded admin list (case-insensitive)
+        is_admin = False
+        if email:
+            is_admin = email.lower() in [e.lower() for e in ADMIN_EMAILS]
+            
+        print(f"DEBUG: Clerk Auth - Final Email: {email}, is_admin: {is_admin}", flush=True)
 
         # Attach is_admin to the user object temporarily for this request
         user.is_admin = is_admin
