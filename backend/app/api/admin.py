@@ -83,7 +83,7 @@ async def invite_user(payload: Dict[str, str], request: Request, admin: User = D
         resp = await client.post(
             f"{CLERK_API_BASE}/invitations",
             headers=headers,
-            json={"email_address": email, "redirect_url": redirect_url}
+            json={"email_address": email, "redirect_url": redirect_url, "notify": True}
         )
         
         if resp.status_code != 200:
@@ -150,7 +150,7 @@ async def resend_invitation(invitation_id: str, request: Request, admin: User = 
         new_inv_resp = await client.post(
             f"{CLERK_API_BASE}/invitations",
             headers=headers,
-            json={"email_address": email, "redirect_url": redirect_url}
+            json={"email_address": email, "redirect_url": redirect_url, "notify": True}
         )
         
         if new_inv_resp.status_code != 200:
