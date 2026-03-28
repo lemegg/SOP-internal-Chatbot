@@ -86,8 +86,6 @@ async def invite_user(payload: Dict[str, str], request: Request, admin: User = D
             json={"email_address": email, "redirect_url": redirect_url, "notify": True}
         )
         
-        print(f"DEBUG: Clerk Invite Response - Status: {resp.status_code}, Body: {resp.text}", flush=True)
-        
         if resp.status_code != 200:
             error_detail = resp.json().get("errors", [{"message": "Invitation failed"}])[0]["message"]
             raise HTTPException(status_code=resp.status_code, detail=error_detail)
